@@ -25,6 +25,8 @@
 | 图表库 | Recharts | 3.8 |
 | 部署平台 | Vercel | Hobby 免费计划 |
 | 数据分析 | Vercel Web Analytics | 免费版，每月 2500 事件 |
+| 性能监控 | Vercel Speed Insights | 免费版，自动追踪 Core Web Vitals |
+| 版本控制 | Git + GitHub | 仓库 King0fLight/bazi-app，自动部署 |
 
 ---
 
@@ -47,6 +49,9 @@
 
 ```
 玄学/
+├── .git/                     ← Git 仓库（已连接 GitHub: King0fLight/bazi-app）
+├── .gitignore                ← Git 忽略规则（排除 玄学古籍PDF/、node_modules/、.vercel/ 等）
+├── .vercel/                  ← Vercel 本地配置（project.json 含 orgId + projectId，不推送 GitHub）
 ├── api/
 │   └── calculate.py          ← Vercel serverless handler（核心，同时处理 API 和静态文件）
 ├── bazi/                     ← 八字计算模块
@@ -171,6 +176,17 @@ __pycache__/
 .env.local
 ```
 
+**`.gitignore`** — 排除不需要版本控制的文件：
+```
+__pycache__/
+node_modules/
+frontend/dist/
+玄学古籍PDF/
+.vercel/
+.idea/
+.env
+```
+
 #### 7.2 api/calculate.py — 最核心的文件
 
 这个文件是整个应用的关键，它同时处理前端和后端：
@@ -211,9 +227,9 @@ Vercel 的构建缓存可能恢复旧版本的 Python 包。如果只依赖 `pyp
 
 `api/calculate.py` 中的 `from bazi.models import BaziInput` 依赖 Python 的模块搜索路径。在 Vercel 的 serverless 环境中，只有项目根目录下的模块能被自动发现。如果 `bazi/` 放在子目录（如 `backend/bazi/`）下，会导致 500 错误（No module named 'bazi'）。这是最初开发时踩过的坑，后来统一为根目录结构。
 
-**坑 4：中文路径问题**
+**坑 4：中文路径问题（仅影响手动部署）**
 
-项目目录名包含中文（"玄学"），在 Windows 上 PowerShell、robocopy、cmd 都无法正确处理编码。部署时需要用 Python 的 `shutil.copytree` 把项目复制到英文名目录再执行 `vercel --prod`。
+项目目录名包含中文（"玄学"），在 Windows 上 PowerShell、robocopy、cmd 都无法正确处理编码。如果使用手动部署方式（方式二），需要用 Python 的 `shutil.copytree` 把项目复制到英文名目录再执行 `vercel --prod`。使用 Git 自动部署（方式一）则不受此影响，因为 Git 和 Vercel 的构建系统能正确处理中文路径。
 
 ---
 
@@ -299,7 +315,7 @@ python -c "import uvicorn; uvicorn.run('api.calculate:handler', host='localhost'
 
 GitHub 仓库地址：`https://github.com/King0fLight/bazi-app`
 
-在 Vercel 中连接 GitHub 仓库后（项目设置 → Git → Connect），每次推送到 GitHub 会自动触发 Vercel 部署：
+GitHub 仓库已连接到 Vercel 项目（项目设置 → Git → 已连接 King0fLight/bazi-app），每次推送到 GitHub 会自动触发 Vercel 部署：
 
 ```bash
 cd C:\Users\King0\PycharmProjects\玄学
