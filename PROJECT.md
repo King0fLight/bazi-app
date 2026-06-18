@@ -10,6 +10,7 @@
 
 线上地址：`https://king0flight.eoty.cn`（自定义域名，由 Gleam 免费子域名平台管理）
 备用地址：`https://bazi-app-seven.vercel.app`
+代码仓库：`https://github.com/King0fLight/bazi-app`
 
 ---
 
@@ -236,7 +237,9 @@ DNS 配置：
 
 ---
 
-### 九、数据分析（Vercel Analytics）
+### 九、数据分析与性能监控
+
+#### 9.1 Vercel Web Analytics
 
 已集成 `@vercel/analytics`，配置方式：
 
@@ -252,6 +255,18 @@ DNS 配置：
 | 自定义事件 | `bazi_calculate` | 每次排盘时记录：year, month, day, hour, minute, gender |
 
 在 Vercel 仪表盘 → bazi-app 项目 → Analytics 标签页查看数据。免费额度：每月 2500 个事件。
+
+#### 9.2 Vercel Speed Insights
+
+已启用 Speed Insights，自动追踪页面加载性能指标（Core Web Vitals）：
+
+| 指标 | 说明 |
+|------|------|
+| LCP (Largest Contentful Paint) | 最大内容渲染时间 |
+| CLS (Cumulative Layout Shift) | 累积布局偏移 |
+| FID (First Input Delay) | 首次输入延迟 |
+
+在 Vercel 仪表盘 → bazi-app 项目 → Speed Insights 标签页查看数据。免费版可用。
 
 ---
 
@@ -280,9 +295,29 @@ python -c "import uvicorn; uvicorn.run('api.calculate:handler', host='localhost'
 
 ### 十一、部署流程
 
-由于项目目录名含中文，无法直接在该目录下运行 Vercel CLI，需要通过 Python 脚本复制到英文名目录再部署。
+#### 方式一：Git 自动部署（推荐）
 
-#### 部署步骤
+GitHub 仓库地址：`https://github.com/King0fLight/bazi-app`
+
+在 Vercel 中连接 GitHub 仓库后（项目设置 → Git → Connect），每次推送到 GitHub 会自动触发 Vercel 部署：
+
+```bash
+cd C:\Users\King0\PycharmProjects\玄学
+git add -A
+git commit -m "描述本次修改"
+git push origin master
+```
+
+推送后 Vercel 会自动执行：安装 Python 依赖 → 构建前端 → 上传文件 → 创建新部署。约 1-2 分钟线上生效。
+
+**注意事项：**
+- 推送时需要能访问 github.com（国内可能需要代理）。本地代理端口通常在 `http://127.0.0.1:7897`，可用 `git -c https.proxy=http://127.0.0.1:7897 push` 走代理
+- `.gitignore` 已配置排除 `玄学古籍PDF/`、`node_modules/`、`__pycache__/` 等
+- `.vercel/` 目录已加入 `.gitignore`，不会推送到 GitHub
+
+#### 方式二：手动部署（备用）
+
+如果 Git 自动部署不可用，可以通过手动复制 + Vercel CLI 部署：
 
 1. 用 Python 脚本复制项目到英文名目录：
 
@@ -318,7 +353,7 @@ Python 环境使用 `D:\Anaconda\envs\ceshi\python.exe`（Windows 上的 Anacond
 #### 日常工作流总结
 
 ```
-修改代码 → 本地 npm run dev 预览 → 复制到英文名目录 → vercel --prod --yes → 线上生效
+修改代码 → git add/commit/push → Vercel 自动构建部署 → 线上生效
 ```
 
 每次部署 Vercel 会自动执行：安装 Python 依赖 → 构建前端（npm install + npm run build）→ 上传所有文件 → 创建新的 production deployment。整个过程约 1-2 分钟。
