@@ -1,3 +1,6 @@
+export type Gender = '男' | '女';
+export type ZiMode = 'split' | 'whole';
+
 export interface StemInfo {
   name: string;
   element: string;
@@ -58,7 +61,7 @@ export interface TianganRelation {
 export interface BaziChart {
   solar_date: string;
   lunar_date: string;
-  gender: string;
+  gender: Gender;
   year_pillar: Pillar;
   month_pillar: Pillar;
   day_pillar: Pillar;
@@ -80,6 +83,6 @@ export interface BaziInput {
   day: number;
   hour: number;
   minute: number;
-  gender: string;
-  zi_mode: string;
+  gender: Gender;
+  zi_mode: ZiMode;
 }

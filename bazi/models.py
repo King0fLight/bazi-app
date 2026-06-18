@@ -1,19 +1,30 @@
 """
 八字排盘 - 数据模型
 """
-from pydantic import BaseModel
-from typing import Optional
+from datetime import date
+from typing import Literal
+
+from pydantic import BaseModel, Field, model_validator
 
 
 class BaziInput(BaseModel):
     """排盘输入"""
-    year: int           # 公历年 (1900-2100)
-    month: int          # 月 (1-12)
-    day: int            # 日 (1-31)
-    hour: int           # 时 (0-23)
-    minute: int = 0     # 分 (0-59)
-    gender: str = "男"   # 男/女
-    zi_mode: str = "split"  # "split"=早晚子时, "whole"=整子时归次日
+    year: int = Field(..., ge=1900, le=2100)      # 公历年
+    month: int = Field(..., ge=1, le=12)          # 月
+    day: int = Field(..., ge=1, le=31)            # 日
+    hour: int = Field(..., ge=0, le=23)           # 时
+    minute: int = Field(0, ge=0, le=59)           # 分
+    gender: Literal["男", "女"] = "男"
+    zi_mode: Literal["split", "whole"] = "split"  # split=早晚子时, whole=整子时归次日
+
+    @model_validator(mode="after")
+    def validate_solar_date(self):
+        """校验公历年月日组合真实存在。"""
+        try:
+            date(self.year, self.month, self.day)
+        except ValueError as exc:
+            raise ValueError("出生日期不是有效的公历日期") from exc
+        return self
 
 
 class StemInfo(BaseModel):
@@ -29,7 +40,7 @@ class BranchInfo(BaseModel):
     name: str           # 子丑寅卯...
     element: str        # 五行
     animal: str         # 生肖
-    canggan: list[StemInfo] = []  # 藏干(含十神)
+    canggan: list[StemInfo] = Field(default_factory=list)  # 藏干(含十神)
 
 
 class Pillar(BaseModel):
@@ -98,23 +109,23 @@ class BaziChart(BaseModel):
     day_master: StemInfo
 
     # 大运
-    dayun: list[DayunItem] = []
+    dayun: list[DayunItem] = Field(default_factory=list)
     dayun_start_age: int = 0
 
     # 五行统计
-    wuxing: WuxingCount = WuxingCount()
+    wuxing: WuxingCount = Field(default_factory=WuxingCount)
 
     # 神煞
-    shensha: list[ShenshaItem] = []
+    shensha: list[ShenshaItem] = Field(default_factory=list)
 
     # 地支关系
-    dizhi_relations: list[DizhiRelation] = []
+    dizhi_relations: list[DizhiRelation] = Field(default_factory=list)
 
     # 天干关系
-    tiangan_relations: list[TianganRelation] = []
+    tiangan_relations: list[TianganRelation] = Field(default_factory=list)
 
     # 空亡
-    kongwang: list[str] = []
+    kongwang: list[str] = Field(default_factory=list)
 
     # 生肖
     shengxiao: str = ""

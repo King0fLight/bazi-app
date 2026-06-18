@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import type { Gender, ZiMode } from '../types/bazi';
 
 interface Props {
   onCalculate: (input: {
     year: number; month: number; day: number;
     hour: number; minute: number;
-    gender: string; zi_mode: string;
+    gender: Gender; zi_mode: ZiMode;
   }) => void;
   loading: boolean;
 }
@@ -31,8 +32,8 @@ export default function BaziForm({ onCalculate, loading }: Props) {
   const [day, setDay] = useState(now.getDate());
   const [hour, setHour] = useState(11);
   const [minute, setMinute] = useState(0);
-  const [gender, setGender] = useState('男');
-  const [ziMode, _setZiMode] = useState('split');
+  const [gender, setGender] = useState<Gender>('男');
+  const [ziMode, setZiMode] = useState<ZiMode>('split');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +73,7 @@ export default function BaziForm({ onCalculate, loading }: Props) {
       <div className="flex flex-col gap-1">
         <label className="text-xs text-gray-400">性别</label>
         <div className="flex gap-2">
-          {['男', '女'].map(g => (
+          {(['男', '女'] as const).map(g => (
             <button key={g} type="button" onClick={() => setGender(g)}
               className={`px-4 py-2 rounded-lg text-sm transition-all ${
                 gender === g
@@ -83,6 +84,13 @@ export default function BaziForm({ onCalculate, loading }: Props) {
             </button>
           ))}
         </div>
+      </div>
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-gray-400">子时</label>
+        <select value={ziMode} onChange={e => setZiMode(e.target.value as ZiMode)} className="w-40">
+          <option value="split">早晚子时</option>
+          <option value="whole">整子时归次日</option>
+        </select>
       </div>
       <button type="submit" disabled={loading}
         className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:from-purple-500 hover:to-blue-500 transition-all disabled:opacity-50 shadow-lg shadow-purple-500/25">

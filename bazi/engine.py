@@ -2,6 +2,8 @@
 八字排盘 - 核心引擎
 使用 lunar_python 库进行四柱排盘计算
 """
+from datetime import date, timedelta
+
 from lunar_python import Solar, Lunar, EightChar
 
 from .tables import (
@@ -31,11 +33,12 @@ def calculate_bazi(inp: BaziInput) -> BaziChart:
     # 子时处理
     if inp.zi_mode == "whole" and inp.hour == 23:
         # 整子时归次日: 23:00后算第二天的子时
-        solar_next = Solar.fromYmdHms(inp.year, inp.month, inp.day + 1, 0, 0, 0)
+        next_day = date(inp.year, inp.month, inp.day) + timedelta(days=1)
+        solar_next = Solar.fromYmdHms(next_day.year, next_day.month, next_day.day, 0, inp.minute, 0)
         lunar_next = solar_next.getLunar()
         ec_next = lunar_next.getEightChar()
         day_ganzhi = ec_next.getDay()
-        time_ganzhi = ec.getTime()
+        time_ganzhi = ec_next.getTime()
     else:
         day_ganzhi = ec.getDay()
         time_ganzhi = ec.getTime()

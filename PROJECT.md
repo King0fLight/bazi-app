@@ -95,7 +95,7 @@
 
 1. 用 `lunar_python.Solar.fromYmdHms()` 将公历日期转为天文数据
 2. 获取 `EightChar` 对象，提取年柱/月柱/日柱/时柱的天干地支
-3. 处理子时分界（whole 整子时 vs split 早晚子时模式）
+3. 处理子时分界（`split` 保持早晚子时，`whole` 将 23:00 后归入次日并重算日柱/时柱）
 4. 查 `tables.py` 中的查找表获取藏干、纳音、十二长生
 5. 调用 `shishen.py` 计算每个天干相对于日主的十神
 6. 调用 `dayun.py` 计算 8 步大运（顺逆由年干阴阳 + 性别决定）
@@ -121,7 +121,7 @@
 | day | int | 日期（1-31） |
 | hour | int | 小时（0-23） |
 | minute | int | 分钟（0-59） |
-| gender | string | "male" 或 "female" |
+| gender | string | "男" 或 "女" |
 | zi_mode | string | "split"（早晚子时）或 "whole"（整子时） |
 
 **响应体（BaziChart）** — 关键字段：
@@ -298,14 +298,20 @@ npm run dev        # 启动 Vite 开发服务器（localhost:5173）
 
 Vite 开发服务器内置了 API 代理：`vite.config.ts` 中配置了 `/api` 前缀的请求代理到 `http://localhost:8000`。这意味着在开发模式下，前端的 API 请求会自动转发到本地后端。如果只需要调试前端 UI，可以用 `vercel dev` 来同时运行前后端。
 
-#### 本地测试后端 API
+#### 本地测试后端计算
+
+`api/calculate.py` 是 Vercel 使用的 `BaseHTTPRequestHandler`，不是 ASGI app，不能直接用 `uvicorn.run()` 启动。需要完整模拟线上路由时，优先使用 Vercel CLI：
 
 ```bash
-pip install fastapi uvicorn lunar_python pydantic
-python -c "import uvicorn; uvicorn.run('api.calculate:handler', host='localhost', port=8000)"
+vercel dev
 ```
 
-注意本地 handler 是 `BaseHTTPRequestHandler`，不像 Vercel 有完整的 serverless 环境。如果需要完全模拟线上环境，建议使用 `vercel dev`。
+只想验证核心排盘函数时，可以直接调用 Python 模块：
+
+```bash
+pip install lunar_python pydantic
+python -c "from bazi.models import BaziInput; from bazi.engine import calculate_bazi; print(calculate_bazi(BaziInput(year=1990, month=1, day=1, hour=11, gender='男')).model_dump_json(indent=2))"
+```
 
 ---
 

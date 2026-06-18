@@ -67,6 +67,7 @@ class handler(BaseHTTPRequestHandler):
         try:
             from bazi.models import BaziInput
             from bazi.engine import calculate_bazi
+            from pydantic import ValidationError
 
             data = json.loads(body)
             inp = BaziInput(**data)
@@ -78,15 +79,29 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write(
                 json.dumps(result.model_dump(), ensure_ascii=False).encode("utf-8")
             )
+        except json.JSONDecodeError:
+            self.send_response(400)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(
+                json.dumps({"error": "请求体不是有效的 JSON"}, ensure_ascii=False).encode("utf-8")
+            )
+        except ValidationError as e:
+            self.send_response(400)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(
+                json.dumps({"error": "输入参数无效", "details": e.errors()}, ensure_ascii=False).encode("utf-8")
+            )
         except Exception as e:
-            import traceback
-            tb = traceback.format_exc()
             self.send_response(500)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(
-                json.dumps({"error": str(e), "traceback": tb}, ensure_ascii=False).encode("utf-8")
+                json.dumps({"error": f"计算失败: {e}"}, ensure_ascii=False).encode("utf-8")
             )
 
     def do_OPTIONS(self):
