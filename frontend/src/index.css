@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+:root {
+  --wuxing-wood: #22c55e;
+  --wuxing-fire: #ef4444;
+  --wuxing-earth: #eab308;
+  --wuxing-metal: #94a3b8;
+  --wuxing-water: #3b82f6;
+
+  --wuxing-wood-bg: #dcfce7;
+  --wuxing-fire-bg: #fef2f2;
+  --wuxing-earth-bg: #fefce8;
+  --wuxing-metal-bg: #f1f5f9;
+  --wuxing-water-bg: #dbeafe;
+}
+
+body {
+  margin: 0;
+  font-family: "Noto Serif SC", "Source Han Serif CN", "STSong", serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  min-height: 100vh;
+  color: #e2e8f0;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* 五行颜色类 */
+.wx-wood { color: var(--wuxing-wood); }
+.wx-fire { color: var(--wuxing-fire); }
+.wx-earth { color: var(--wuxing-earth); }
+.wx-metal { color: var(--wuxing-metal); }
+.wx-water { color: var(--wuxing-water); }
+
+.wx-wood-bg { background-color: var(--wuxing-wood-bg); color: #166534; }
+.wx-fire-bg { background-color: var(--wuxing-fire-bg); color: #991b1b; }
+.wx-earth-bg { background-color: var(--wuxing-earth-bg); color: #854d0e; }
+.wx-metal-bg { background-color: var(--wuxing-metal-bg); color: #334155; }
+.wx-water-bg { background-color: var(--wuxing-water-bg); color: #1e40af; }
+
+/* 排盘卡片 */
+.pillar-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+.pillar-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* 天干地支大字 */
+.stem-text {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.branch-text {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* 大运时间线 */
+.dayun-item {
+  position: relative;
+  padding-left: 2rem;
+}
+.dayun-item::before {
+  content: '';
+  position: absolute;
+  left: 0.5rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.2);
+}
+.dayun-item::after {
+  content: '';
+  position: absolute;
+  left: 0.15rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: #60a5fa;
+  border: 2px solid #1e3a5f;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+
+/* 输入框 */
+input[type="number"], select {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #e2e8f0 !important;
+  border-radius: 8px;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+input[type="number"]:focus, select:focus {
+  border-color: #60a5fa !important;
+}
+input[type="number"]::-webkit-inner-spin-button {
+  opacity: 0.5;
+}

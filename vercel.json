@@ -1,0 +1,9 @@
+{
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "pip install --upgrade pydantic lunar_python && cd frontend && npm install",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/api/bazi/calculate", "destination": "/api/calculate" }
+  ]
+}

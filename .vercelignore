@@ -1,0 +1,7 @@
+玄学古籍PDF/
+frontend/node_modules/
+__pycache__/
+*.pyc
+.git/
+.env
+.env.local

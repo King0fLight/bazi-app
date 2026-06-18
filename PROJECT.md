@@ -1,0 +1,347 @@
+## 八字排盘 Web 应用 — 项目技术文档
+
+本文档为项目交接用途编写，面向接手本项目的开发者或 AI Agent，涵盖架构设计、技术实现、部署流程和已知坑点。
+
+---
+
+### 一、项目概述
+
+本项目是一个基于传统子平命理学的八字排盘 Web 应用。用户输入出生年月日时和性别，系统自动计算并展示四柱八字、十神、大运、神煞、五行力量、地支关系等完整命理信息。
+
+线上地址：`https://king0flight.eoty.cn`（自定义域名，由 Gleam 免费子域名平台管理）
+备用地址：`https://bazi-app-seven.vercel.app`
+
+---
+
+### 二、技术栈
+
+| 层面 | 技术 | 版本 |
+|------|------|------|
+| 后端计算引擎 | Python + lunar_python + pydantic | Python 3.12, lunar_python 1.4.8, pydantic 2.13 |
+| 前端框架 | React + TypeScript | React 19.2, TS 6.0 |
+| 构建工具 | Vite | 8.0 |
+| CSS 框架 | Tailwind CSS v4 | 4.3（通过 @tailwindcss/vite 插件，无需配置文件） |
+| 图表库 | Recharts | 3.8 |
+| 部署平台 | Vercel | Hobby 免费计划 |
+| 数据分析 | Vercel Web Analytics | 免费版，每月 2500 事件 |
+
+---
+
+### 三、项目架构
+
+```
+请求流程：
+
+用户浏览器 → Vercel Edge → Python Serverless Function (api/calculate.py)
+                              ├── GET  → 返回 frontend/dist 中的静态文件，或 SPA 回退到 index.html
+                              ├── POST → 调用 bazi/ 模块计算八字，返回 JSON
+                              └── OPTIONS → CORS 预检响应
+```
+
+整个应用只部署一个 Python serverless function，同时承担前端静态文件服务器和后端 API 两个角色。这是 Vercel 对 Python 项目的特殊架构——不像 Node.js 项目有独立的静态文件托管，Python 项目需要手动在 handler 中同时处理 GET 和 POST。
+
+---
+
+### 四、目录结构
+
+```
+玄学/
+├── api/
+│   └── calculate.py          ← Vercel serverless handler（核心，同时处理 API 和静态文件）
+├── bazi/                     ← 八字计算模块
+│   ├── __init__.py
+│   ├── engine.py             ← 主计算引擎，约 336 行
+│   ├── models.py             ← Pydantic 数据模型，约 121 行
+│   ├── tables.py             ← 天干地支/纳音/神煞查找表，约 278 行
+│   ├── shishen.py            ← 十神计算，约 68 行
+│   ├── dayun.py              ← 大运计算，约 70 行
+│   └── shensha.py            ← 神煞检测，约 129 行
+├── frontend/
+│   ├── src/
+│   │   ├── main.tsx          ← React 入口
+│   │   ├── App.tsx           ← 主应用组件（状态管理 + Analytics 追踪）
+│   │   ├── index.css         ← 全局样式 + Tailwind v4 + 五行配色
+│   │   ├── api/bazi.ts       ← API 客户端（POST /api/bazi/calculate）
+│   │   ├── types/bazi.ts     ← TypeScript 接口（与 Python models 对应）
+│   │   └── components/       ← 6 个 UI 组件
+│   │       ├── BaziForm.tsx       输入表单
+│   │       ├── PillarGrid.tsx     四柱展示卡片
+│   │       ├── WuxingChart.tsx    五行柱状图（Recharts）
+│   │       ├── DayunTimeline.tsx  大运时间线
+│   │       ├── ShenshaList.tsx    神煞标签
+│   │       └── Relations.tsx      天干地支关系
+│   ├── index.html            ← SPA 入口 HTML
+│   ├── vite.config.ts        ← Vite 配置（React + Tailwind v4 + API 代理）
+│   └── package.json          ← 前端依赖
+├── vercel.json               ← Vercel 部署配置
+├── pyproject.toml            ← Python 项目配置 + Vercel 入口点
+├── requirements.txt          ← Python 依赖
+├── .vercelignore             ← Vercel 部署排除列表
+├── PROJECT.md                ← 本文件
+└── 玄学古籍PDF/               ← 138 本命理古籍 PDF（约 462 MB，不部署）
+```
+
+---
+
+### 五、核心计算引擎（bazi/engine.py）
+
+`calculate_bazi(inp: BaziInput) -> BaziChart` 是核心函数，执行流程：
+
+1. 用 `lunar_python.Solar.fromYmdHms()` 将公历日期转为天文数据
+2. 获取 `EightChar` 对象，提取年柱/月柱/日柱/时柱的天干地支
+3. 处理子时分界（whole 整子时 vs split 早晚子时模式）
+4. 查 `tables.py` 中的查找表获取藏干、纳音、十二长生
+5. 调用 `shishen.py` 计算每个天干相对于日主的十神
+6. 调用 `dayun.py` 计算 8 步大运（顺逆由年干阴阳 + 性别决定）
+7. 调用 `shensha.py` 检测 11 种神煞
+8. 统计五行力量（天干地支 + 藏干加权）
+9. 检测地支关系（六合/三合/三会/六冲/刑/害/破）和天干关系（合化）
+10. 计算空亡（日柱旬空）、生肖、农历日期格式化
+
+**lunar_python 库**：底层使用瑞士星历表（Swiss Ephemeris）计算天文数据，精度覆盖 1900-2100 年，是中文历法计算中最可靠的 Python 库之一。
+
+---
+
+### 六、前后端数据接口
+
+前端通过 `POST /api/bazi/calculate` 发送 JSON，后端返回 JSON。两端的数据模型严格对应：
+
+**请求体（BaziInput）**：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| year | int | 公历年份（1900-2100） |
+| month | int | 月份（1-12） |
+| day | int | 日期（1-31） |
+| hour | int | 小时（0-23） |
+| minute | int | 分钟（0-59） |
+| gender | string | "male" 或 "female" |
+| zi_mode | string | "split"（早晚子时）或 "whole"（整子时） |
+
+**响应体（BaziChart）** — 关键字段：
+
+| 字段 | 说明 |
+|------|------|
+| solar_date / lunar_date | 公历和农历日期字符串 |
+| year/month/day/hour_pillar | 四柱数据，每柱含天干(stem)、地支(branch)、纳音(nayin)、藏干(canggan)等 |
+| day_master | 日主信息（天干名、五行、阴阳） |
+| dayun[] | 大运列表，每项含天干、地支、起始年龄、起始年份、纳音 |
+| wuxing | 五行力量统计 {木, 火, 土, 金, 水} |
+| shensha[] | 神煞列表，每项含名称、类型（吉/凶）、所在柱 |
+| dizhi_relations[] / tiangan_relations[] | 地支和天干关系（合、冲、刑、害等） |
+| kongwang[] | 空亡地支 |
+| shengxiao | 生肖 |
+
+Python 端的 Pydantic 模型在 `bazi/models.py`，TypeScript 端的接口定义在 `frontend/src/types/bazi.ts`。修改数据结构时两端必须同步更新。
+
+---
+
+### 七、Vercel 部署架构详解
+
+#### 7.1 关键配置文件
+
+**`pyproject.toml`** — 告诉 Vercel 使用哪个 Python 入口点：
+```toml
+[tool.vercel]
+entrypoint = "api.calculate:handler"
+```
+
+**`vercel.json`** — 构建和部署配置：
+```json
+{
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "pip install --upgrade pydantic lunar_python && cd frontend && npm install",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/api/bazi/calculate", "destination": "/api/calculate" }
+  ]
+}
+```
+
+**`.vercelignore`** — 排除不需要部署的文件：
+```
+玄学古籍PDF/
+frontend/node_modules/
+__pycache__/
+*.pyc
+.git/
+.env
+.env.local
+```
+
+#### 7.2 api/calculate.py — 最核心的文件
+
+这个文件是整个应用的关键，它同时处理前端和后端：
+
+```python
+class handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        path = self.path.split('?')[0].lstrip('/')
+
+        # 关键：排除 /_vercel/ 路径，让 Vercel 基础设施处理
+        if path.startswith('_vercel/'):
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        # 尝试从 frontend/dist 中找静态文件
+        # 找到 → 返回文件（assets/ 路径加 immutable 缓存头）
+        # 找不到 → SPA 回退返回 index.html
+
+    def do_POST(self):
+        # 解析 JSON body → BaziInput → calculate_bazi() → 返回 JSON
+
+    def do_OPTIONS(self):
+        # CORS 预检
+```
+
+#### 7.3 已知坑点（非常重要）
+
+**坑 1：`/_vercel/` 路径必须排除**
+
+Vercel 会自动注入 analytics 脚本（`/_vercel/insights/script.js`）和数据上报端点（`/_vercel/insights/view`、`/_vercel/insights/event`）。如果 Python handler 的 SPA 回退不把这些路径排除掉，handler 会返回 index.html 而不是 404，导致 Vercel 的 analytics 完全失效——数据上报请求被当作页面路由处理了。
+
+**坑 2：`installCommand` 必须显式安装 Python 依赖**
+
+Vercel 的构建缓存可能恢复旧版本的 Python 包。如果只依赖 `pyproject.toml` 自动安装，缓存命中时会跳过安装，导致 `pydantic` 或 `lunar_python` 缺失（500 错误）。必须在 `vercel.json` 的 `installCommand` 中显式 `pip install --upgrade`。
+
+**坑 3：`bazi/` 模块必须在项目根目录**
+
+`api/calculate.py` 中的 `from bazi.models import BaziInput` 依赖 Python 的模块搜索路径。在 Vercel 的 serverless 环境中，只有项目根目录下的模块能被自动发现。如果 `bazi/` 放在子目录（如 `backend/bazi/`）下，会导致 500 错误（No module named 'bazi'）。这是最初开发时踩过的坑，后来统一为根目录结构。
+
+**坑 4：中文路径问题**
+
+项目目录名包含中文（"玄学"），在 Windows 上 PowerShell、robocopy、cmd 都无法正确处理编码。部署时需要用 Python 的 `shutil.copytree` 把项目复制到英文名目录再执行 `vercel --prod`。
+
+---
+
+### 八、自定义域名配置
+
+自定义域名 `king0flight.eoty.cn` 由 Gleam 免费子域名平台（https://sld.0n.pub）管理。
+
+DNS 配置：
+
+| 记录类型 | 名称 | 值 | 用途 |
+|---------|------|-----|------|
+| CNAME | @ | cname.vercel-dns.com | 将域名指向 Vercel |
+| TXT | _vercel | vc-domain-verify=king0flight.eoty.cn,692657187c947c543ecc | Vercel 域名验证 |
+
+**注意事项：** Vercel 的 TXT 验证记录需要在 `_vercel.eoty.cn`（父域名级别）添加，但 Gleam 平台默认只能在子域名级别（`king0flight.eoty.cn`）添加记录。这意味着需要在 Gleam 提交工单，请管理员手动在父域名级别添加 TXT 记录。这是一次性操作，域名验证后无需再改。
+
+**Vercel 项目信息：**
+- Project ID: `prj_N9xzbM2MXBZSpNIxnGoaQBL6sQbh`
+- Team ID: `team_gEhQh07XUWYuUrak24Zl1DQP`
+- SSL 证书由 Vercel / Let's Encrypt 自动签发和续期
+
+---
+
+### 九、数据分析（Vercel Analytics）
+
+已集成 `@vercel/analytics`，配置方式：
+
+1. `frontend/package.json` 中安装 `@vercel/analytics`
+2. `frontend/src/App.tsx` 中引入 `Analytics` 组件和 `track` 函数
+3. `api/calculate.py` 中排除 `/_vercel/` 路径（否则 analytics 失效）
+
+追踪的数据：
+
+| 类型 | 名称 | 说明 |
+|------|------|------|
+| 页面浏览 | 自动 | 每次访问自动记录 URL、来源、设备、地区 |
+| 自定义事件 | `bazi_calculate` | 每次排盘时记录：year, month, day, hour, minute, gender |
+
+在 Vercel 仪表盘 → bazi-app 项目 → Analytics 标签页查看数据。免费额度：每月 2500 个事件。
+
+---
+
+### 十、本地开发
+
+#### 前端开发（主要方式）
+
+```bash
+cd frontend
+npm install
+npm run dev        # 启动 Vite 开发服务器（localhost:5173）
+```
+
+Vite 开发服务器内置了 API 代理：`vite.config.ts` 中配置了 `/api` 前缀的请求代理到 `http://localhost:8000`。这意味着在开发模式下，前端的 API 请求会自动转发到本地后端。如果只需要调试前端 UI，可以用 `vercel dev` 来同时运行前后端。
+
+#### 本地测试后端 API
+
+```bash
+pip install fastapi uvicorn lunar_python pydantic
+python -c "import uvicorn; uvicorn.run('api.calculate:handler', host='localhost', port=8000)"
+```
+
+注意本地 handler 是 `BaseHTTPRequestHandler`，不像 Vercel 有完整的 serverless 环境。如果需要完全模拟线上环境，建议使用 `vercel dev`。
+
+---
+
+### 十一、部署流程
+
+由于项目目录名含中文，无法直接在该目录下运行 Vercel CLI，需要通过 Python 脚本复制到英文名目录再部署。
+
+#### 部署步骤
+
+1. 用 Python 脚本复制项目到英文名目录：
+
+```python
+import shutil, os, stat
+
+src = r'C:\Users\King0\PycharmProjects\玄学'
+dst = r'C:\Users\King0\.qoderworkcn\workspace\<workspace-id>\bazi-deploy'
+
+if os.path.exists(dst):
+    shutil.rmtree(dst, onexc=lambda f, p, e: (os.chmod(p, stat.S_IWRITE), f(p)))
+
+shutil.copytree(src, dst, ignore=shutil.ignore_patterns(
+    'node_modules', '.git', '__pycache__', '*.pyc', '玄学古籍PDF'
+))
+
+# 创建 .vercel/project.json 链接到已有项目
+vercel_dir = os.path.join(dst, '.vercel')
+os.makedirs(vercel_dir, exist_ok=True)
+with open(os.path.join(vercel_dir, 'project.json'), 'w') as f:
+    f.write('{"orgId":"team_gEhQh07XUWYuUrak24Zl1DQP","projectId":"prj_N9xzbM2MXBZSpNIxnGoaQBL6sQbh"}')
+```
+
+2. 在英文名目录下执行部署：
+
+```bash
+cd <英文名目录>
+vercel --prod --yes
+```
+
+Python 环境使用 `D:\Anaconda\envs\ceshi\python.exe`（Windows 上的 Anaconda 环境，能正确处理中文路径编码）。
+
+#### 日常工作流总结
+
+```
+修改代码 → 本地 npm run dev 预览 → 复制到英文名目录 → vercel --prod --yes → 线上生效
+```
+
+每次部署 Vercel 会自动执行：安装 Python 依赖 → 构建前端（npm install + npm run build）→ 上传所有文件 → 创建新的 production deployment。整个过程约 1-2 分钟。
+
+---
+
+### 十二、Vercel 账号认证
+
+Vercel CLI 的认证信息存储在：
+```
+%APPDATA%\xdg.data\com.vercel.cli\auth.json
+```
+
+包含 `token`、`userId`、`refreshToken`、`expiresAt`。Token 会过期自动刷新，如果 API 调用报 `invalidToken`，重新运行 `vercel login` 即可。
+
+---
+
+### 十三、优化建议（给接手者）
+
+1. **代码分割**：前端 JS bundle 超过 500 KB（Vite 有警告），可以通过 `dynamic import()` 把 Recharts 图表库按需加载，减少首屏加载时间。
+
+2. **时区处理**：当前排盘使用本地时间，未考虑出生地时区校正（真太阳时）。这是一个常见的命理应用需求。
+
+3. **测试覆盖**：项目目前没有任何单元测试。建议至少为 `engine.py` 的核心计算逻辑添加测试，对照已知命盘验证计算正确性。
+
+4. **古籍 PDF 利用**：`玄学古籍PDF/` 中有 138 本命理古籍（462 MB），可以作为知识库接入 RAG 系统，为用户提供排盘结果的经典文献解读。

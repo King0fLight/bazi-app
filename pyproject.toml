@@ -1,0 +1,11 @@
+[project]
+name = "bazi-app"
+version = "1.0.0"
+requires-python = ">=3.9"
+dependencies = [
+    "lunar_python>=1.4.0",
+    "pydantic>=2.0.0",
+]
+
+[tool.vercel]
+entrypoint = "api.calculate:handler"
