@@ -7,6 +7,17 @@ interface GuideItem {
   focus: string;
 }
 
+interface PlainReading {
+  headline: string;
+  summary: string;
+  plainPoints: string[];
+}
+
+interface TermItem {
+  term: string;
+  meaning: string;
+}
+
 const MONTH_GUIDES: Record<string, GuideItem> = {
   寅: {
     title: '春令木气',
@@ -163,16 +174,100 @@ function buildGuides(chart: BaziChart): GuideItem[] {
   return guides.slice(0, 5);
 }
 
+function buildPlainReading(chart: BaziChart): PlainReading {
+  const monthBranch = chart.month_pillar.branch.name;
+  const monthStem = chart.month_pillar.stem.name;
+  const dayStem = chart.day_master.name;
+  const dayElement = chart.day_master.element;
+  const wuxingEntries = Object.entries(chart.wuxing) as [string, number][];
+  const sortedWuxing = [...wuxingEntries].sort(([, a], [, b]) => b - a);
+  const strongest = sortedWuxing[0];
+  const weakest = sortedWuxing[sortedWuxing.length - 1];
+  const relationCount = chart.dizhi_relations.length + chart.tiangan_relations.length;
+
+  const headline = `${dayStem}日主，生在${monthStem}${monthBranch}月，先从季节气势看整体倾向`;
+
+  const plainPoints = [
+    `这张盘的核心不是先看神煞，而是先看“日主”在出生月份有没有力量。日主代表自己，月令代表出生季节的大环境。`,
+    strongest && weakest
+      ? `五行统计里，${strongest[0]}相对更明显，${weakest[0]}相对更少。白话说，就是命局的能量不是平均分布，解读时要看过强的部分如何泄、制，偏弱的部分如何补、扶。`
+      : '五行分布需要结合四柱和藏干一起看，不能只看表面天干地支。',
+    relationCount > 0
+      ? `命局里出现了${relationCount}组干支关系。合、冲、刑、害这类关系，像是命盘内部的“互动”，会让某些五行被加强、牵动或破坏。`
+      : '当前干支关系不算复杂，可以先按月令、日主、五行流通这条主线读。',
+    `经典书的作用，是帮你判断“为什么这样取用”。这版先给研读方向，下一版可以接入 PDF 原文，直接给出处和页码。`,
+  ];
+
+  return {
+    headline,
+    summary: `${dayElement}日主的判断，要放回${monthBranch}月的季节气势里看，再结合五行偏强偏弱、干支互动和神煞辅助。`,
+    plainPoints,
+  };
+}
+
+function buildTerms(chart: BaziChart): TermItem[] {
+  const terms: TermItem[] = [
+    {
+      term: '日主',
+      meaning: `日柱天干，也就是这张盘里代表“自己”的核心符号。当前日主是 ${chart.day_master.name}，五行属${chart.day_master.element}。`,
+    },
+    {
+      term: '月令',
+      meaning: `月柱地支，代表出生季节的主气。它像命局的天气和土壤，会强烈影响日主强弱和取用方向。当前月令是 ${chart.month_pillar.branch.name}。`,
+    },
+    {
+      term: '五行偏枯',
+      meaning: '五行不是越平均越好，关键看能不能流通。某一行太旺，要看能不能泄、制、化；某一行太弱，要看是否需要生扶。',
+    },
+    {
+      term: '调候',
+      meaning: '先看寒、暖、燥、湿是否失衡。比如冬月多重视火来暖局，夏月多重视水来润燥。',
+    },
+    {
+      term: '格局',
+      meaning: '把十神、月令、透干、根气组合起来看命局主线。它不是一个标签，而是一套判断结构是否成立的方法。',
+    },
+    {
+      term: '神煞',
+      meaning: '神煞可以补充细节，但不能单独决定吉凶。更稳的顺序是先看五行旺衰和格局，再参考神煞。',
+    },
+  ];
+
+  if (chart.dizhi_relations.length > 0 || chart.tiangan_relations.length > 0) {
+    terms.push({
+      term: '合冲刑害',
+      meaning: '干支之间的互动关系。合可能聚合或牵制，冲可能引动或破坏，具体要看它影响的是喜用还是忌神。',
+    });
+  }
+
+  return terms;
+}
+
 export default function ClassicsGuide({ chart }: { chart: BaziChart }) {
   const guides = buildGuides(chart);
+  const reading = buildPlainReading(chart);
+  const terms = buildTerms(chart);
 
   return (
     <section className="pillar-card p-5">
       <div className="flex flex-col gap-1 text-center mb-4">
         <h3 className="text-base font-semibold text-amber-200">经典依据</h3>
         <p className="text-xs text-gray-400">
-          依据月令、日主、五行与干支结构，匹配本地古籍的研读方向
+          先把术语翻成白话，再给本地古籍的研读方向
         </p>
+      </div>
+
+      <div className="mb-5 rounded-lg border border-amber-300/20 bg-gradient-to-br from-amber-300/10 to-white/5 p-4">
+        <div className="text-xs text-amber-300 mb-2">白话总览</div>
+        <h4 className="text-base font-semibold text-gray-100 leading-7">{reading.headline}</h4>
+        <p className="mt-2 text-sm text-gray-300 leading-6">{reading.summary}</p>
+        <div className="mt-3 grid gap-2">
+          {reading.plainPoints.map((point) => (
+            <p key={point} className="rounded border border-white/10 bg-black/10 px-3 py-2 text-xs leading-5 text-gray-300">
+              {point}
+            </p>
+          ))}
+        </div>
       </div>
 
       <div className="divide-y divide-white/10">
@@ -186,6 +281,18 @@ export default function ClassicsGuide({ chart }: { chart: BaziChart }) {
             <p className="mt-1 text-xs text-gray-500 leading-5">{guide.focus}</p>
           </div>
         ))}
+      </div>
+
+      <div className="mt-5">
+        <div className="text-xs text-gray-400 mb-2 text-center">术语怎么理解</div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {terms.map((item) => (
+            <div key={item.term} className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+              <div className="text-sm font-medium text-gray-100">{item.term}</div>
+              <p className="mt-1 text-xs leading-5 text-gray-400">{item.meaning}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="mt-4 rounded border border-amber-400/20 bg-amber-400/5 px-3 py-2 text-xs leading-5 text-amber-100/80">
