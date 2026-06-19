@@ -11,6 +11,7 @@ import ShenshaList from './components/ShenshaList';
 import Relations from './components/Relations';
 import ClassicsGuide from './components/ClassicsGuide';
 import ReadingPath from './components/ReadingPath';
+import LearningReport from './components/LearningReport';
 
 export default function App() {
   const [chart, setChart] = useState<BaziChart | null>(null);
@@ -74,6 +75,9 @@ export default function App() {
             <span className="mx-3">|</span>
             <span>{chart.gender}命</span>
           </div>
+
+          {/* Learning Report */}
+          <LearningReport chart={chart} />
 
           {/* Reading Path */}
           <ReadingPath chart={chart} />
