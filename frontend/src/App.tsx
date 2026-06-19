@@ -10,6 +10,7 @@ import DayunTimeline from './components/DayunTimeline';
 import ShenshaList from './components/ShenshaList';
 import Relations from './components/Relations';
 import ClassicsGuide from './components/ClassicsGuide';
+import ReadingPath from './components/ReadingPath';
 
 export default function App() {
   const [chart, setChart] = useState<BaziChart | null>(null);
@@ -73,6 +74,9 @@ export default function App() {
             <span className="mx-3">|</span>
             <span>{chart.gender}命</span>
           </div>
+
+          {/* Reading Path */}
+          <ReadingPath chart={chart} />
 
           {/* Four Pillars */}
           <PillarGrid
