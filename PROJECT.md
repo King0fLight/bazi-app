@@ -431,7 +431,7 @@ Vercel CLI 的认证信息存储在：
 
 | 日期 | 提交 | 说明 |
 |------|------|------|
-| 2026-06-19 | 本次更新 | 根据用户反馈将产品定位从“学习用户”调整为“解惑用户”：前端表单新增问题主题和具体困惑，`LearningReport` 改为先回应用户问题、再展示命盘依据和追问信息；`ReadingPath` 改为“这个答复从哪里来”；`ClassicsGuide` 改为“古籍依据线索”。参考 `jinchenma94/bazi-skill` 和 `cantian-ai/bazi-mcp` 后，明确下一阶段方向为“排盘工具 + 本地古籍 PDF 检索 + Agent 回答”。 |
+| 2026-06-19 | `cb862d2` | 根据用户反馈将产品定位从“学习用户”调整为“解惑用户”：前端表单新增问题主题和具体困惑，`LearningReport` 改为先回应用户问题、再展示命盘依据和追问信息；`ReadingPath` 改为“这个答复从哪里来”；`ClassicsGuide` 改为“古籍依据线索”。参考 `jinchenma94/bazi-skill` 和 `cantian-ai/bazi-mcp` 后，明确下一阶段方向为“排盘工具 + 本地古籍 PDF 检索 + Agent 回答”。 |
 | 2026-06-19 | 本次更新 | 继续把产品从“排盘展示器”改成“命理学习报告”：新增 `LearningReport`，重做输入区说明和按钮文案，用问题驱动解释日主、月令、五行、合冲、神煞的阅读顺序；新增回档标签 `backup-before-learning-report-20260619`。 |
 | 2026-06-19 | 本次更新 | 参考 GitHub 八字项目的常见功能组织后，新增“这张盘怎么读”导读卡片，并增强“经典依据”结果卡片：先给白话总览，再解释日主、月令、五行偏枯、调候、格局、神煞等术语，最后推荐本地八字古籍的研读方向；已创建回档标签 `backup-before-classics-20260619`。 |
 | 2026-06-19 | `3c2cc04` | 安装并接入 Vercel Speed Insights；`App.tsx` 新增 `<SpeedInsights />`，代码已推送到 GitHub，Vercel 会自动部署。 |
