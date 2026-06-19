@@ -9,6 +9,7 @@ import WuxingChart from './components/WuxingChart';
 import DayunTimeline from './components/DayunTimeline';
 import ShenshaList from './components/ShenshaList';
 import Relations from './components/Relations';
+import ClassicsGuide from './components/ClassicsGuide';
 
 export default function App() {
   const [chart, setChart] = useState<BaziChart | null>(null);
@@ -82,6 +83,9 @@ export default function App() {
 
           {/* Wuxing Chart */}
           <WuxingChart wuxing={chart.wuxing} />
+
+          {/* Classics Guide */}
+          <ClassicsGuide chart={chart} />
 
           {/* Dayun Timeline */}
           <DayunTimeline dayun={chart.dayun} startAge={chart.dayun_start_age} />
