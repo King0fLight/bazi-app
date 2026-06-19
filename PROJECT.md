@@ -274,7 +274,14 @@ DNS 配置：
 
 #### 9.2 Vercel Speed Insights
 
-已启用 Speed Insights，自动追踪页面加载性能指标（Core Web Vitals）：
+已集成 `@vercel/speed-insights`，配置方式：
+
+1. `frontend/package.json` 中安装 `@vercel/speed-insights`
+2. `frontend/src/App.tsx` 中引入 `SpeedInsights` 组件
+3. 在页面根节点末尾渲染 `<SpeedInsights />`
+4. 首次使用时，需要在 Vercel 仪表盘 → bazi-app 项目 → Speed Insights 标签页确认启用
+
+自动追踪页面加载性能指标（Core Web Vitals）：
 
 | 指标 | 说明 |
 |------|------|
@@ -282,7 +289,7 @@ DNS 配置：
 | CLS (Cumulative Layout Shift) | 累积布局偏移 |
 | FID (First Input Delay) | 首次输入延迟 |
 
-在 Vercel 仪表盘 → bazi-app 项目 → Speed Insights 标签页查看数据。免费版可用。
+在 Vercel 仪表盘 → bazi-app 项目 → Speed Insights 标签页查看数据。免费版可用。代码侧已经完成接入；如果面板仍显示未启用，需要在 Vercel 后台手动点一次 Enable。
 
 ---
 
@@ -402,3 +409,21 @@ Vercel CLI 的认证信息存储在：
 3. **测试覆盖**：项目目前没有任何单元测试。建议至少为 `engine.py` 的核心计算逻辑添加测试，对照已知命盘验证计算正确性。
 
 4. **古籍 PDF 利用**：`玄学古籍PDF/` 中有 138 本命理古籍（462 MB），可以作为知识库接入 RAG 系统，为用户提供排盘结果的经典文献解读。
+
+---
+
+### 十四、变更记录（给后续模型/开发者）
+
+每次修改后建议同步更新本节，方便后续接手者快速判断本地文件、GitHub 仓库和 Vercel 部署之间的状态。
+
+| 日期 | 提交 | 说明 |
+|------|------|------|
+| 2026-06-19 | `3c2cc04` | 安装并接入 Vercel Speed Insights；`App.tsx` 新增 `<SpeedInsights />`，代码已推送到 GitHub，Vercel 会自动部署。 |
+| 2026-06-19 | `a445571` | 加固八字排盘输入校验和接口错误处理；修复整子时跨日逻辑；前端新增子时模式选项；构建验证通过。 |
+
+当前协作说明：
+- 本地仓库路径：`C:\Users\King0\PycharmProjects\玄学`
+- GitHub 仓库：`https://github.com/King0fLight/bazi-app`
+- 线上主域名：`https://king0flight.eoty.cn`
+- Vercel 备用域名：`https://bazi-app-seven.vercel.app`
+- 日常流程：改代码 → 更新本文件 → `git add`/`commit`/`push` → Vercel 自动部署
