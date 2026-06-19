@@ -6,11 +6,17 @@
 
 ### 一、项目概述
 
-本项目是一个基于传统子平命理学的八字排盘 Web 应用。用户输入出生年月日时和性别，系统自动计算并展示四柱八字、十神、大运、神煞、五行力量、地支关系等完整命理信息。
+本项目是一个基于传统子平命理学的八字排盘与命盘解惑 Web 应用。用户输入出生年月日时、性别和当前困惑，系统先完成四柱八字、十神、大运、神煞、五行力量、地支关系等结构化排盘，再围绕用户问题生成一份白话“解惑报告”。
+
+当前产品定位不是教用户系统学习八字，而是面向“真的有疑惑、希望得到解释”的访问者：先回答问题，再展示命盘依据、经典线索和继续追问所需的现实信息。排盘模块是底层工具，前端报告负责把术语翻译成可理解的答复。
 
 线上地址：`https://king0flight.eoty.cn`（自定义域名，由 Gleam 免费子域名平台管理）
 备用地址：`https://bazi-app-seven.vercel.app`
 代码仓库：`https://github.com/King0fLight/bazi-app`
+
+参考项目：
+- `https://github.com/jinchenma94/bazi-skill`：可参考其“逐步收集用户问题和出生信息 -> 排盘 -> 综合分析 -> 引用经典”的 Agent 工作流。
+- `https://github.com/cantian-ai/bazi-mcp`：可参考其“把八字排盘做成 MCP 工具，供 AI Agent 调用结构化结果”的工具化思路。
 
 ---
 
@@ -69,8 +75,11 @@
 │   │   ├── index.css         ← 全局样式 + Tailwind v4 + 五行配色
 │   │   ├── api/bazi.ts       ← API 客户端（POST /api/bazi/calculate）
 │   │   ├── types/bazi.ts     ← TypeScript 接口（与 Python models 对应）
-│   │   └── components/       ← 6 个 UI 组件
+│   │   └── components/       ← UI 组件
 │   │       ├── BaziForm.tsx       输入表单
+│   │       ├── LearningReport.tsx 解惑报告（围绕用户问题组织答复）
+│   │       ├── ReadingPath.tsx    命盘证据路径
+│   │       ├── ClassicsGuide.tsx  古籍依据线索
 │   │       ├── PillarGrid.tsx     四柱展示卡片
 │   │       ├── WuxingChart.tsx    五行柱状图（Recharts）
 │   │       ├── DayunTimeline.tsx  大运时间线
@@ -123,6 +132,8 @@
 | minute | int | 分钟（0-59） |
 | gender | string | "男" 或 "女" |
 | zi_mode | string | "split"（早晚子时）或 "whole"（整子时） |
+
+前端表单还会收集 `topic`（问题主题）和 `question`（用户具体困惑），用于生成页面内的解惑报告；这两个字段不会发送给当前 Python 排盘 API，`frontend/src/api/bazi.ts` 会在请求前剥离它们，避免后端 Pydantic 模型报额外字段错误。后续如果接入真正的 Agent/RAG 后端，可以把这两个字段作为咨询上下文传入新接口。
 
 **响应体（BaziChart）** — 关键字段：
 
@@ -410,6 +421,8 @@ Vercel CLI 的认证信息存储在：
 
 4. **古籍 PDF 利用**：`玄学古籍PDF/` 中有 138 本命理古籍（462 MB），可以作为知识库接入 RAG 系统，为用户提供排盘结果的经典文献解读。
 
+5. **命盘解惑 Agent**：下一阶段建议做成“问题 -> 排盘工具 -> 古籍检索 -> 答案生成”的链路。先抽取 26 本八字命理 PDF，建立文本索引和书名/页码元数据；再让 Agent 根据用户问题、四柱结构、五行偏向、大运阶段去检索证据，输出带出处的回答。参考 `bazi-skill` 的交互流程和 `bazi-mcp` 的工具化结构。
+
 ---
 
 ### 十四、变更记录（给后续模型/开发者）
@@ -418,6 +431,7 @@ Vercel CLI 的认证信息存储在：
 
 | 日期 | 提交 | 说明 |
 |------|------|------|
+| 2026-06-19 | 本次更新 | 根据用户反馈将产品定位从“学习用户”调整为“解惑用户”：前端表单新增问题主题和具体困惑，`LearningReport` 改为先回应用户问题、再展示命盘依据和追问信息；`ReadingPath` 改为“这个答复从哪里来”；`ClassicsGuide` 改为“古籍依据线索”。参考 `jinchenma94/bazi-skill` 和 `cantian-ai/bazi-mcp` 后，明确下一阶段方向为“排盘工具 + 本地古籍 PDF 检索 + Agent 回答”。 |
 | 2026-06-19 | 本次更新 | 继续把产品从“排盘展示器”改成“命理学习报告”：新增 `LearningReport`，重做输入区说明和按钮文案，用问题驱动解释日主、月令、五行、合冲、神煞的阅读顺序；新增回档标签 `backup-before-learning-report-20260619`。 |
 | 2026-06-19 | 本次更新 | 参考 GitHub 八字项目的常见功能组织后，新增“这张盘怎么读”导读卡片，并增强“经典依据”结果卡片：先给白话总览，再解释日主、月令、五行偏枯、调候、格局、神煞等术语，最后推荐本地八字古籍的研读方向；已创建回档标签 `backup-before-classics-20260619`。 |
 | 2026-06-19 | `3c2cc04` | 安装并接入 Vercel Speed Insights；`App.tsx` 新增 `<SpeedInsights />`，代码已推送到 GitHub，Vercel 会自动部署。 |

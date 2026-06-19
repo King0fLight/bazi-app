@@ -251,14 +251,14 @@ export default function ClassicsGuide({ chart }: { chart: BaziChart }) {
   return (
     <section className="pillar-card p-5">
       <div className="flex flex-col gap-1 text-center mb-4">
-        <h3 className="text-base font-semibold text-amber-200">经典依据</h3>
+        <h3 className="text-base font-semibold text-amber-200">古籍依据线索</h3>
         <p className="text-xs text-gray-400">
-          先把术语翻成白话，再给本地古籍的研读方向
+          先把当前命盘对应到哪些经典问题，后续可接入本地 PDF 返回原文出处
         </p>
       </div>
 
       <div className="mb-5 rounded-lg border border-amber-300/20 bg-gradient-to-br from-amber-300/10 to-white/5 p-4">
-        <div className="text-xs text-amber-300 mb-2">白话总览</div>
+        <div className="text-xs text-amber-300 mb-2">依据总览</div>
         <h4 className="text-base font-semibold text-gray-100 leading-7">{reading.headline}</h4>
         <p className="mt-2 text-sm text-gray-300 leading-6">{reading.summary}</p>
         <div className="mt-3 grid gap-2">
@@ -284,7 +284,7 @@ export default function ClassicsGuide({ chart }: { chart: BaziChart }) {
       </div>
 
       <div className="mt-5">
-        <div className="text-xs text-gray-400 mb-2 text-center">术语怎么理解</div>
+        <div className="text-xs text-gray-400 mb-2 text-center">报告里这些词怎么影响判断</div>
         <div className="grid gap-2 sm:grid-cols-2">
           {terms.map((item) => (
             <div key={item.term} className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
@@ -296,7 +296,7 @@ export default function ClassicsGuide({ chart }: { chart: BaziChart }) {
       </div>
 
       <div className="mt-4 rounded border border-amber-400/20 bg-amber-400/5 px-3 py-2 text-xs leading-5 text-amber-100/80">
-        本版先做结构化导读；下一步可把 26 本八字 PDF 提取成索引，直接返回原文片段、书名与页码。
+        本版先给经典线索；下一步可把 26 本八字 PDF 提取成索引，让解惑报告直接返回原文片段、书名与页码。
       </div>
     </section>
   );

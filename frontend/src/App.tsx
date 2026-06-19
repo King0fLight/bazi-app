@@ -15,6 +15,10 @@ import LearningReport from './components/LearningReport';
 
 export default function App() {
   const [chart, setChart] = useState<BaziChart | null>(null);
+  const [questionContext, setQuestionContext] = useState({
+    topic: '整体困惑',
+    question: '我想知道这张命盘主要说明什么，以及现在应该注意什么。',
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,6 +28,10 @@ export default function App() {
     try {
       const result = await calculateBazi(input);
       setChart(result);
+      setQuestionContext({
+        topic: input.topic ?? '整体困惑',
+        question: input.question ?? '我想知道这张命盘主要说明什么，以及现在应该注意什么。',
+      });
       track('bazi_calculate', {
         year: input.year,
         month: input.month,
@@ -44,10 +52,10 @@ export default function App() {
       {/* Header */}
       <header className="text-center mb-8">
         <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-purple-300 via-blue-300 to-cyan-300 bg-clip-text text-transparent">
-          八字排盘
+          命盘解惑
         </h1>
         <p className="text-gray-400 text-sm mt-2">
-          四柱八字 · 十神 · 大运 · 神煞 · 五行
+          先说清你的困惑，再用四柱、五行、大运与经典线索给出依据
         </p>
       </header>
 
@@ -77,10 +85,10 @@ export default function App() {
           </div>
 
           {/* Learning Report */}
-          <LearningReport chart={chart} />
+          <LearningReport chart={chart} topic={questionContext.topic} question={questionContext.question} />
 
-          {/* Reading Path */}
-          <ReadingPath chart={chart} />
+          {/* Answer Evidence Path */}
+          <ReadingPath chart={chart} topic={questionContext.topic} />
 
           {/* Four Pillars */}
           <PillarGrid
@@ -111,7 +119,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="text-center text-xs text-gray-600 mt-12 pb-8">
-        基于传统子平命理学 · 仅供学习研究参考
+        基于传统子平命理学 · 仅作文化参考，不替代现实决策
       </footer>
 
       <Analytics />

@@ -85,4 +85,6 @@ export interface BaziInput {
   minute: number;
   gender: Gender;
   zi_mode: ZiMode;
+  question?: string;
+  topic?: string;
 }
