@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Analytics, track } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import type { BaziChart } from './types/bazi';
 import { calculateBazi } from './api/bazi';
 import BaziForm from './components/BaziForm';
@@ -102,6 +103,7 @@ export default function App() {
       </footer>
 
       <Analytics />
+      <SpeedInsights />
     </div>
   );
 }
